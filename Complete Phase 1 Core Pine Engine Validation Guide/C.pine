@@ -2,7 +2,7 @@
 // This is the MVP subset script provided in the requirements
 
 //@version=5
-indicator('MashumeHullTV', overlay=true)
+indicator('C', overlay=true)
 
 // ————— Inputs
 price = input(hl2, title='Source')

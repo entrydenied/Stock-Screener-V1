@@ -1,0 +1,11 @@
+pandas
+numpy
+pandas_ta
+pytest
+requests
+Flask
+SQLAlchemy
+psycopg2-binary
+redis
+kafka-python
+python-dotenv

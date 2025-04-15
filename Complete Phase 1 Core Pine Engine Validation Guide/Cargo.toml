@@ -1,0 +1,39 @@
+[package]
+name = "pine_engine"
+version = "0.1.0"
+edition = "2021"
+description = "A Pine Script execution engine for trading strategy validation"
+authors = ["Manus"]
+
+[dependencies]
+# Parser dependencies
+pest = "2.7"
+pest_derive = "2.7"
+nom = "7.1"
+
+# Runtime dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4"
+rust_decimal = "1.32"
+rust_decimal_macros = "1.32"
+
+# Data handling
+reqwest = { version = "0.11", features = ["json", "blocking"] }
+csv = "1.2"
+
+# Testing
+criterion = "0.5"
+float-cmp = "0.9"
+
+# gRPC
+tonic = "0.10"
+prost = "0.12"
+tokio = { version = "1.32", features = ["full"] }
+
+[build-dependencies]
+tonic-build = "0.10"
+
+[dev-dependencies]
+rstest = "0.18"
+mockito = "1.2"

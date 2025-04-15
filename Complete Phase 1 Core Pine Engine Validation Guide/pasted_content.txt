@@ -1,0 +1,85 @@
+I want you to complete the following task on the following guide:
+
+Task: **Phase 1: Core Pine Engine & Validation**
+
+Okay, here is a cut-down and simplified step-by-step guide focused *solely* on achieving the **Phase 3: Basic End-to-End Screener** capability, as requested. This version removes steps related to advanced features, UI polish, scaling, and full production hardening found in later phases of the original plan.
+
+**Goal:** Build a Minimum Viable Product (MVP) screener capable of defining a simple Pine Script™-based screen, executing it across multiple symbols using real market data, and displaying the list of matching symbols.
+
+**Simplified Step-by-Step Guide:**
+
+**Phase 0: Foundations & Planning**
+
+1. **Define Scope & Legal:**
+    - **Precisely Define MVP:** Confirm the exact Pine Script™ functions (alertcondition etc.), syntax, and timeframe required for the *basic* screener.
+    - **(CRITICAL) Legal Review:** Obtain explicit legal clearance regarding Pine Script™ engine replication *before* proceeding.
+2. **Core Team & Tools:**
+    - Assign leads (Backend, Engine, Data).
+    - Set up Git repositories, project management (Jira/Linear), communication (Slack/Teams).
+3. **Pine Script™ MVP Analysis:**
+    - Analyze the *subset* of Pine Script™ features needed for the MVP.
+    - Gather simple test scripts focusing on MVP functionality (including alertcondition).
+    - Document expected behavior for this subset based on TradingView.
+4. **Basic Architecture & Cloud Setup:**
+    - Design the high-level interaction between services (API, Engine, Worker, Data).
+    - Set up basic cloud infrastructure (VPC, minimal Kubernetes cluster like EKS, basic IAM roles) using Terraform.
+    - Implement a skeleton CI/CD pipeline (e.g., GitHub Actions) for linting/building.
+
+**Phase 1: Core Pine Engine & Validation (Focus: Accuracy)**
+
+1. **Build Pine Engine Core (Rust/C++):**
+    - Implement the Parser (Pine Script™ text -> AST) for the *MVP subset*.
+    - Implement the Basic Runtime (Interpreter logic, basic types, operators) for the *MVP subset*.
+    - Implement *key required* built-in functions (e.g., close, sma, alertcondition, na, nz) **rigorously matching TradingView logic and precision**.
+2. **Develop Validation Framework:**
+    - Build tooling to fetch specific historical OHLCV data for comparison.
+    - Create a test harness to run the *same* Pine script with the *same* data on both TradingView (manually is okay initially) and the replica engine.
+    - Implement automated comparison of outputs (especially alertcondition results) flagging *any* difference.
+3. **Validate Engine & Expose:**
+    - Integrate Parser & Runtime.
+    - Use the Validation Framework to test the engine *repeatedly* against the MVP test scripts until outputs **match TradingView 100%** for the covered subset.
+    - Expose the engine's execution function via a gRPC interface.
+
+**Phase 2: Data Pipeline & Basic Execution**
+
+1. **Market Data Ingestion:**
+    - Implement a service (Go/Kotlin) to connect to a data provider.
+    - Parse and publish standardized OHLCV data to Kafka.
+2. **Data Storage & Access:**
+    - Set up Kafka (e.g., MSK).
+    - Implement a service (Go/Kotlin) to consume from Kafka and write data to TimescaleDB.
+    - Implement a basic Metadata Service (Go + PostgreSQL) for managing symbol information (name, exchange).
+3. **Basic Execution Worker (Go):**
+    - Build a worker that can:
+        - Receive a simple task (Symbol, Timeframe, Script).
+        - Fetch symbol metadata.
+        - Fetch required OHLCV data from TimescaleDB.
+        - Call the Pine Engine gRPC service.
+        - Log the result (match/no match/error).
+4. **Basic Monitoring:**
+    - Set up basic Prometheus/Grafana for data flow rates, DB performance, and worker activity.
+
+**Phase 3: End-to-End Screener Logic**
+
+1. **Screener Definition:**
+    - Implement a Service & API (Go + PostgreSQL) to define/read simple screeners (list of symbols, single timeframe, single Pine script).
+2. **Job Scheduling & Dispatch:**
+    - Implement a Scheduler (Go) that:
+        - Takes a screener ID.
+        - Fetches its definition.
+        - Creates individual tasks (Symbol, Timeframe, Script).
+        - Sends tasks to a worker queue (e.g., Redis list or Kafka topic).
+3. **Worker Enhancement:**
+    - Modify workers (from Step 10) to consume tasks from the queue.
+    - Report results (Symbol, Match Status based on alertcondition) to an aggregation point.
+4. **Results Handling:**
+    - Implement a Results Aggregation Service (Go + Redis) to temporarily store results for a specific screener run.
+    - Build a Basic Backend API (Go/Node.js) with endpoints to:
+        - Define/List screeners (/screeners).
+        - Trigger a screener run (/screeners/{id}/run).
+        - Get results for a run (/screeners/runs/{run_id}/results - simple list of matching symbols).
+5. **Minimal Interface & Test:**
+    - Create a *very basic* CLI tool or simple web page (React) to interact with the API: define a screen, trigger it, and display the list of matching symbols.
+    - **Test the End-to-End Flow:** Verify that defining a screen, running it, and viewing the correct matching symbols works as expected.
+
+**Outcome:** Upon completion of Step 16, you will have a functional, albeit basic, off-platform replica capable of executing specific Pine Script™ alertcondition logic across a list of symbols and reporting the matches, meeting the core requirement of the "Phase 3: Basic End-to-End Screener" goal. Accuracy of the Pine Engine subset remains the highest priority throughout.

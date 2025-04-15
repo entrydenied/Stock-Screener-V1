@@ -1,0 +1,61 @@
+// Example script for testing the Pine Engine
+// This is the MVP subset script provided in the requirements
+
+//@version=5
+indicator('MashumeHullTV', overlay=true)
+
+// ————— Inputs
+price = input(hl2, title='Source')
+HMA_Length = input(21, 'HMA Length')
+lookback = input(2, 'lookback')
+ShowHullSupResLines = input(false, 'ShowHullSup/ResLines')
+ShowBuySellArrows = input(false, 'ShowBuySellArrows')
+ShowDivergenceLabel = input(false, 'ShowDivergenceLabel')
+ExtendSupResLines = input(false, 'ExtendLocalSup/ResLines')
+
+// ————— Calculations
+HMA = ta.hma(price, HMA_Length)
+delta = HMA[1] - HMA[lookback + 1]
+delta_per_bar = delta / lookback
+next_bar = HMA[1] + delta_per_bar
+concavity = HMA > next_bar ? 1 : -1
+O_R = HMA > HMA[1] ? color(#ff7f00) : color(#ff0000)
+DG_G = HMA < HMA[1] ? color(#025f02) : color(#00fa03)
+
+// ————— Plots
+plot(HMA, 'HMA', color=concavity != -1 ? DG_G : O_R, linewidth=3)
+
+//MA_Min and MA_Max Points only
+MA_Min = HMA > HMA[1] and HMA[1] < HMA[2] ? HMA[1] : na
+MA_Max = HMA < HMA[1] and HMA[1] > HMA[2] ? HMA[1] : na
+
+//MA_Min and MA_Max Series
+saveMA_Min = ta.valuewhen(HMA > HMA[1] and HMA[1] < HMA[2], HMA[1], 0)
+saveMA_Max = ta.valuewhen(HMA < HMA[1] and HMA[1] > HMA[2], HMA[1], 0)
+
+//Draw MA_Min/MA_Max as lines from series or just points
+plot(ShowHullSupResLines ? saveMA_Min : MA_Min, 'MA_Min/Hull Support', style=plot.style_circles, color=color(#00fa03), linewidth=1, trackprice=ExtendSupResLines, offset=-1)
+plot(ShowHullSupResLines ? saveMA_Max : MA_Max, 'MA_Max/Hull Resistance', style=plot.style_circles, color=color(#ff0000), linewidth=1, trackprice=ExtendSupResLines, offset=-1)
+
+//Draw Arrows at MA_Min/MA_Max
+plotshape(ShowBuySellArrows ? MA_Min : na, 'Buy', shape.triangleup, location.belowbar, color.new(color.green, 0), text='Buy', offset=-1)
+plotshape(ShowBuySellArrows ? MA_Max : na, 'Sell', shape.triangledown, location.abovebar, color.new(color.red, 0), text='Sell', offset=-1)
+
+//Divergence Label
+divergence = math.round(HMA - next_bar, precision=4)
+divergenceColor = if concavity < 0 and divergence[1] > divergence
+    color.red
+else if concavity < 0 and divergence[1] < divergence
+    color.fuchsia
+else if concavity > 0 and divergence[1] < divergence
+    color.green
+else
+    color.yellow
+
+labelText = 'Divergence:\n' + str.tostring(divergence)
+divergenceLabel = ShowDivergenceLabel ? label.new(x=bar_index, y=close, text=labelText, yloc=yloc.belowbar, color=divergenceColor, textcolor=color.black, style=label.style_label_up, size=size.normal) : na
+label.delete(divergenceLabel[1])
+
+// ————— Alerts
+alertcondition(ta.crossover(HMA, saveMA_Min), title='Buy Signal', message='Hull Crossing above MA_Min, Bullish')
+alertcondition(ta.crossunder(HMA, saveMA_Max), title='Sell Signal', message='Hull Crossing below MA_Max, Bearish')

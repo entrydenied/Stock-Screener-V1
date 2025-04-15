@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package pine_engine;
+
+service PineEngineService {
+  rpc Execute (ExecuteRequest) returns (ExecuteResponse);
+}
+
+message ExecuteRequest {
+  string script = 1;
+  string symbol = 2;
+  string timeframe = 3;
+  repeated CandleData data = 4;
+}
+
+message CandleData {
+  int64 timestamp = 1;
+  double open = 2;
+  double high = 3;
+  double low = 4;
+  double close = 5;
+  double volume = 6;
+}
+
+message ExecuteResponse {
+  repeated Alert alerts = 1;
+  repeated Plot plots = 2;
+}
+
+message Alert {
+  string title = 1;
+  string message = 2;
+}
+
+message Plot {
+  string name = 1;
+  string color = 2;
+  repeated PlotValue values = 3;
+}
+
+message PlotValue {
+  double value = 1;
+}
